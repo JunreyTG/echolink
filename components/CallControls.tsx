@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { MicIcon, MicOffIcon, HeadsetIcon, HangUpIcon } from './Icons';
 
-const CallControls: React.FC = () => {
+interface CallControlsProps {
+  onLeave: () => void;
+}
+
+const CallControls: React.FC<CallControlsProps> = ({ onLeave }) => {
   const [isMuted, setIsMuted] = useState(false);
   const [isDeafened, setIsDeafened] = useState(false);
-
-  const handleHangUp = () => {
-    // In a real app, this would trigger disconnection logic
-    console.log('Hanging up call...');
-  };
 
   return (
     <div className="flex items-center space-x-2">
@@ -31,7 +30,7 @@ const CallControls: React.FC = () => {
         <HeadsetIcon className="h-5 w-5" />
       </button>
       <button
-        onClick={handleHangUp}
+        onClick={onLeave}
         className="p-2 rounded-full text-white bg-red-600 hover:bg-red-700 transition-colors"
         aria-label="Disconnect"
       >

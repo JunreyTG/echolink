@@ -21,7 +21,7 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ onSelect, onClose }) => {
       role="dialog"
     >
       <div
-        className="bg-[#2f3136] p-4 rounded-lg shadow-xl border border-black/20"
+        className="bg-[#24273a] p-4 rounded-lg shadow-xl border border-black/20"
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
       >
         <div className="grid grid-cols-6 gap-2">
@@ -29,7 +29,7 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ onSelect, onClose }) => {
             <button
               key={emoji}
               onClick={() => handleSelect(emoji)}
-              className="text-3xl p-2 rounded-md hover:bg-gray-700/50 transition-colors"
+              className="text-3xl p-2 rounded-md hover:bg-white/10 transition-colors"
               aria-label={`React with ${emoji}`}
             >
               {emoji}
