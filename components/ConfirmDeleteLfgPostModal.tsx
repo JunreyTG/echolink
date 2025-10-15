@@ -1,35 +1,30 @@
 import React from 'react';
-import { Message } from '../types';
+import { LfgPost } from '../types';
 import { CloseIcon, TrashIcon } from './Icons';
 
-interface ConfirmDeleteModalProps {
-  message: Message;
+interface ConfirmDeleteLfgPostModalProps {
+  post: LfgPost;
   onClose: () => void;
   onConfirm: () => void;
 }
 
-const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({ message, onClose, onConfirm }) => {
+const ConfirmDeleteLfgPostModal: React.FC<ConfirmDeleteLfgPostModalProps> = ({ post, onClose, onConfirm }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose} aria-modal="true" role="dialog">
       <div className="bg-white dark:bg-[#2f3136] rounded-lg shadow-2xl w-full max-w-md mx-4 p-6" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-black dark:text-white">Delete Message</h2>
+          <h2 className="text-xl font-bold text-black dark:text-white">Delete Post</h2>
           <button onClick={onClose} className="p-1.5 rounded-full hover:bg-black/10 dark:hover:bg-gray-700/50 text-gray-500 dark:text-gray-400" aria-label="Close">
             <CloseIcon className="h-5 w-5" />
           </button>
         </div>
-        <p className="text-gray-700 dark:text-gray-300 mb-4">Are you sure you want to delete this message?</p>
+        <p className="text-gray-700 dark:text-gray-300 mb-4">Are you sure you want to permanently delete this post?</p>
         
         <div className="bg-gray-100 dark:bg-[#36393f] p-3 rounded-md border border-black/10 dark:border-black/20 mb-6">
-            <div className="flex items-start">
-                <img src={message.author.avatarUrl} alt={message.author.username} className="h-10 w-10 rounded-full mr-3"/>
-                <div className="min-w-0">
-                    <div className="flex items-baseline space-x-2">
-                        <span className="font-semibold text-green-600 dark:text-green-400">{message.author.username}</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-500">{message.timestamp}</span>
-                    </div>
-                    <p className="text-gray-800 dark:text-gray-200 mt-1 whitespace-pre-wrap break-words">{message.content}</p>
-                </div>
+            <div className="min-w-0">
+                <p className="font-semibold text-green-600 dark:text-green-400">{post.game}</p>
+                <p className="text-gray-800 dark:text-gray-200 mt-1 font-medium">{post.title}</p>
+                {post.description && <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{post.description}</p>}
             </div>
         </div>
         
@@ -51,4 +46,4 @@ const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({ message, onClos
   );
 };
 
-export default ConfirmDeleteModal;
+export default ConfirmDeleteLfgPostModal;

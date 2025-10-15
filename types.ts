@@ -16,6 +16,12 @@ export interface User {
   bio?: string;
   favoriteGames?: string[];
   memberSince?: string;
+  isBot?: boolean;
+  isPremium?: boolean;
+  language?: string;
+  badge?: string;
+  flairUrl?: string;
+  theme?: string;
 }
 
 export interface Reaction {
@@ -24,7 +30,7 @@ export interface Reaction {
 }
 
 export interface Attachment {
-  url: string;
+  url:string;
   type: 'image' | 'video';
   name: string;
 }
@@ -48,10 +54,50 @@ export interface Room {
   ownerId?: string;
   password?: string;
   isPublic?: boolean;
+  memberLimit?: number;
+  streamingPermissionRequired?: boolean;
+  language?: string;
+  game?: string;
 }
 
 export interface RoomCategory {
-  id: string;
+  id:string;
   name: string;
   rooms: Room[];
+}
+
+export interface LfgPost {
+  id: string;
+  authorId: string;
+  game: string;
+  title: string;
+  description: string;
+  spotsNeeded: number;
+  spotsFilled: number;
+  tags: string[];
+  createdAt: string;
+}
+
+export enum NotificationType {
+  FRIEND_REQUEST = 'FRIEND_REQUEST',
+  LOBBY_INVITE = 'LOBBY_INVITE',
+  LFG_JOIN_REQUEST = 'LFG_JOIN_REQUEST',
+  MENTION = 'MENTION',
+}
+
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  senderId: string;
+  recipientId: string;
+  isRead: boolean;
+  createdAt: string;
+  // Contextual data
+  data?: {
+    roomId?: string;
+    roomName?: string;
+    postId?: string;
+    postTitle?: string;
+    messageId?: string;
+  };
 }

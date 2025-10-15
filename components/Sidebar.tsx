@@ -1,7 +1,9 @@
 import React from 'react';
 import { Room, RoomCategory, User, UserStatus } from '../types';
-import { HashtagIcon, VolumeUpIcon, ChevronDownIcon, UserGroupIcon, PlusIcon, DoorEnterIcon, CompassIcon } from './Icons';
+import { HashtagIcon, VolumeUpIcon, ChevronDownIcon, UserGroupIcon, PlusIcon, DoorEnterIcon, CompassIcon, SparklesIcon, GamepadIcon } from './Icons';
 import { statusColors } from '../constants';
+import { ECHO_BOT_USER } from '../dummyData';
+import UserPanel from './UserPanel';
 
 type View = { type: 'room'; id: string } | { type: 'friends'; id: 'friends' } | { type: 'dm'; id: string } | { type: 'lfg'; id: 'lfg' };
 
@@ -17,9 +19,50 @@ interface SidebarProps {
   users: User[];
   voiceStates: Record<string, string | null>;
   lobbyNicknames: Record<string, Record<string, string>>;
+  onLogout: () => void;
+  isMuted: boolean;
+  isDeafened: boolean;
+  onToggleMute: () => void;
+  onToggleDeafen: () => void;
+  onOpenSettings: () => void;
+  onViewProfile: (user: User) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentUser, friends, activeView, onViewSelect, roomCategories, onJoinLobby, onOpenCreateLobby, onOpenFindLobby, users, voiceStates, lobbyNicknames }) => {
+const DMButton: React.FC<{ user: User; isActive: boolean; onClick: () => void }> = ({ user, isActive, onClick }) => (
+    <button
+        onClick={onClick}
+        className={`relative w-full text-left flex items-center px-2 py-1 rounded-md transition-colors duration-150 group ${
+          isActive
+            ? 'bg-black/10 dark:bg-white/5 text-gray-900 dark:text-white'
+            : 'text-gray-600 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-gray-800 dark:hover:text-gray-100'
+        }`}
+      >
+        <div className={`absolute left-0 top-1/2 -translate-y-1/2 h-4 w-1 rounded-r-full bg-green-400 transition-transform scale-y-0 group-hover:scale-y-50 ${isActive ? 'scale-y-100' : ''}`}></div>
+        <div className="relative mr-2">
+          <img src={user.avatarUrl} alt={user.username} className="h-8 w-8 rounded-full" />
+          {!user.isBot && (
+            <div className={`absolute -bottom-0.5 -right-0.5 p-0.5 rounded-full ${user.status === UserStatus.OFFLINE ? '' : 'bg-gray-100 dark:bg-[#24273a]'}`}>
+                <div className={`h-2.5 w-2.5 rounded-full border-2 border-gray-100 dark:border-[#24273a] ${statusColors[user.status]}`}></div>
+            </div>
+          )}
+        </div>
+        <div className="font-medium flex-1 truncate flex items-center">
+            {user.username}
+            {user.isPremium && <SparklesIcon className="h-4 w-4 ml-1.5 text-purple-500 dark:text-purple-400 flex-shrink-0" />}
+        </div>
+        {user.isBot && <span className="text-xs font-bold bg-indigo-500 text-white px-1.5 py-0.5 rounded">BOT</span>}
+    </button>
+);
+
+
+const Sidebar: React.FC<SidebarProps> = (props) => {
+    const { 
+        currentUser, friends, activeView, onViewSelect, roomCategories, 
+        onJoinLobby, onOpenCreateLobby, onOpenFindLobby, users, voiceStates, 
+        lobbyNicknames, onLogout, isMuted, isDeafened, onToggleMute, onToggleDeafen,
+        onOpenSettings, onViewProfile
+    } = props;
+
 
   const NavButton: React.FC<{
     icon: React.ReactNode;
@@ -31,8 +74,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser, friends, activeView, onV
         onClick={onClick}
         className={`relative w-full text-left flex items-center px-3 py-2 rounded-md transition-colors duration-150 group ${
           isActive
-            ? 'bg-white/5 text-white'
-            : 'text-gray-300 hover:bg-white/5 hover:text-gray-100'
+            ? 'bg-black/10 dark:bg-white/5 text-gray-900 dark:text-white'
+            : 'text-gray-700 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-gray-100'
         }`}
       >
         <div className={`absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r-full bg-green-400 transition-transform scale-y-0 group-hover:scale-y-50 ${isActive ? 'scale-y-100' : ''}`}></div>
@@ -42,121 +85,145 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser, friends, activeView, onV
   );
 
   return (
-    <nav className="flex-1 space-y-4 overflow-y-auto p-2">
+    <>
+    <nav className="flex-1 space-y-4 overflow-y-auto p-2 bg-gray-100 dark:bg-[#24273a]">
       <div>
         <NavButton
-          icon={<UserGroupIcon className="h-5 w-5 mr-3 text-gray-400" />}
+          icon={<UserGroupIcon className="h-5 w-5 mr-3 text-gray-500 dark:text-gray-400" />}
           label="Friends"
           isActive={activeView.type === 'friends'}
           onClick={() => onViewSelect({ type: 'friends', id: 'friends' })}
         />
          <NavButton
-          icon={<CompassIcon className="h-5 w-5 mr-3 text-gray-400" />}
+          icon={<CompassIcon className="h-5 w-5 mr-3 text-gray-500 dark:text-gray-400" />}
           label="Find Group"
           isActive={activeView.type === 'lfg'}
           onClick={() => onViewSelect({ type: 'lfg', id: 'lfg' })}
         />
       </div>
       
-      {roomCategories.map(category => (
-        <div key={category.id}>
-          <div className="flex items-center justify-between px-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
-            <div className="flex items-center">
-              <ChevronDownIcon className="h-4 w-4 mr-1" />
-              {category.name}
-            </div>
-            {category.name === 'Voice Channels' && (
-              <div className="flex items-center space-x-1">
-                 <button onClick={onOpenFindLobby} className="p-1 text-gray-400 hover:text-white" aria-label="Join Lobby">
-                  <DoorEnterIcon className="h-4 w-4" />
-                </button>
-                <button onClick={onOpenCreateLobby} className="p-1 text-gray-400 hover:text-white" aria-label="Create Lobby">
-                  <PlusIcon className="h-4 w-4" />
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="mt-2 space-y-1">
-            {category.rooms.map(room => {
-              const isActive = activeView.type === 'room' && activeView.id === room.id;
-              const isVoice = room.type === 'voice';
-              const usersInRoom = isVoice ? users.filter(u => voiceStates[u.id] === room.id) : [];
+      {roomCategories.map(category => {
+        const roomsToShow = category.name === 'Voice Channels' 
+            ? category.rooms.filter(room => !!room.ownerId) 
+            : category.rooms;
+        
+        if (roomsToShow.length === 0 && category.name === 'Voice Channels') return null;
 
-              const handleClick = () => {
-                if (isVoice) {
-                  onJoinLobby(room.id);
-                } else {
-                  onViewSelect({ type: 'room', id: room.id });
-                }
-              };
-
-              return (
-                <div key={room.id}>
-                  <button
-                    onClick={handleClick}
-                    className={`relative w-full text-left flex items-center px-3 py-1.5 rounded-md transition-colors duration-150 group ${
-                      isActive
-                        ? 'bg-white/5 text-white'
-                        : 'text-gray-400 hover:bg-white/5 hover:text-gray-100'
-                    }`}
-                  >
-                     <div className={`absolute left-0 top-1/2 -translate-y-1/2 h-4 w-1 rounded-r-full bg-green-400 transition-transform scale-y-0 group-hover:scale-y-50 ${isActive ? 'scale-y-100' : ''}`}></div>
-                    {isVoice ? 
-                      <VolumeUpIcon className="h-5 w-5 mr-3 text-gray-500" /> : 
-                      <HashtagIcon className="h-5 w-5 mr-3 text-gray-500" />
-                    }
-                    <span className="font-medium">{room.name}</span>
-                  </button>
-                  {isVoice && usersInRoom.length > 0 && (
-                    <div className="pl-8 pr-2 py-1 space-y-2">
-                      {usersInRoom.map(user => {
-                         const nickname = lobbyNicknames[room.id]?.[user.id];
-                         const displayName = nickname || user.username;
-                        return (
-                          <div key={user.id} className="flex items-center text-sm text-gray-300">
-                            <img src={user.avatarUrl} alt={user.username} className="h-5 w-5 rounded-full mr-2" />
-                            <span className="truncate">{displayName}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+        return (
+            <div key={category.id}>
+            <div className="flex items-center justify-between px-2 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <div className="flex items-center">
+                <ChevronDownIcon className="h-4 w-4 mr-1" />
+                {category.name}
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      ))}
+                {category.name === 'Voice Channels' && (
+                <div className="flex items-center space-x-1">
+                    <button onClick={onOpenFindLobby} className="p-1 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white" aria-label="Join Lobby">
+                    <DoorEnterIcon className="h-4 w-4" />
+                    </button>
+                    <button onClick={onOpenCreateLobby} className="p-1 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white" aria-label="Create Lobby">
+                    <PlusIcon className="h-4 w-4" />
+                    </button>
+                </div>
+                )}
+            </div>
+            <div className="mt-2 space-y-1">
+                {roomsToShow.map(room => {
+                const isActive = activeView.type === 'room' && activeView.id === room.id;
+                const isVoice = room.type === 'voice';
+                const usersInRoom = isVoice ? users.filter(u => voiceStates[u.id] === room.id) : [];
+
+                const handleClick = () => {
+                    if (isVoice) {
+                        const isConnected = voiceStates[currentUser.id] === room.id;
+                        if (!isConnected) {
+                            onJoinLobby(room.id);
+                        } else {
+                            onViewSelect({ type: 'room', id: room.id });
+                        }
+                    } else {
+                        onViewSelect({ type: 'room', id: room.id });
+                    }
+                };
+
+                return (
+                    <div key={room.id}>
+                    <button
+                        onClick={handleClick}
+                        className={`relative w-full text-left flex items-center px-3 py-1.5 rounded-md transition-colors duration-150 group ${
+                        isActive
+                            ? 'bg-black/10 dark:bg-white/5 text-gray-900 dark:text-white'
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-gray-800 dark:hover:text-gray-100'
+                        }`}
+                    >
+                        <div className={`absolute left-0 top-1/2 -translate-y-1/2 h-4 w-1 rounded-r-full bg-green-400 transition-transform scale-y-0 group-hover:scale-y-50 ${isActive ? 'scale-y-100' : ''}`}></div>
+                        {isVoice ? 
+                        <VolumeUpIcon className="h-5 w-5 mr-3 text-gray-600 dark:text-gray-500" /> : 
+                        <HashtagIcon className="h-5 w-5 mr-3 text-gray-600 dark:text-gray-500" />
+                        }
+                        <div className="flex-1 min-w-0">
+                          <span className="font-medium truncate">{room.name}</span>
+                          {isVoice && room.game && (
+                            <div className="flex items-center text-xs text-gray-500 dark:text-gray-500 truncate">
+                              <GamepadIcon className="h-3 w-3 mr-1 flex-shrink-0" />
+                              <span className="truncate">{room.game}</span>
+                            </div>
+                          )}
+                        </div>
+                    </button>
+                    {isVoice && usersInRoom.length > 0 && (
+                        <div className="pl-8 pr-2 py-1 space-y-2">
+                        {usersInRoom.map(user => {
+                            const nickname = lobbyNicknames[room.id]?.[user.id];
+                            const displayName = nickname || user.username;
+                            return (
+                            <div key={user.id} className="flex items-center text-sm text-gray-700 dark:text-gray-300">
+                                <img src={user.avatarUrl} alt={user.username} className="h-5 w-5 rounded-full mr-2" />
+                                <span className="truncate">{displayName}</span>
+                            </div>
+                            );
+                        })}
+                        </div>
+                    )}
+                    </div>
+                );
+                })}
+            </div>
+            </div>
+        );
+      })}
       
       <div>
-        <div className="px-2 mb-2 text-xs font-bold text-gray-400 uppercase tracking-wider">Direct Messages</div>
+        <div className="px-2 mb-2 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Direct Messages</div>
         <div className="space-y-1">
-          {friends.map(friend => {
-            const isActive = activeView.type === 'dm' && activeView.id === friend.id;
-            return (
-              <button
+            <DMButton 
+                user={ECHO_BOT_USER}
+                isActive={activeView.type === 'dm' && activeView.id === ECHO_BOT_USER.id}
+                onClick={() => onViewSelect({ type: 'dm', id: ECHO_BOT_USER.id })}
+            />
+            <hr className="border-t border-black/10 dark:border-white/10 my-2" />
+          {friends.map(friend => (
+             <DMButton 
                 key={friend.id}
+                user={friend}
+                isActive={activeView.type === 'dm' && activeView.id === friend.id}
                 onClick={() => onViewSelect({ type: 'dm', id: friend.id })}
-                className={`relative w-full text-left flex items-center px-2 py-1 rounded-md transition-colors duration-150 group ${
-                  isActive
-                    ? 'bg-white/5 text-white'
-                    : 'text-gray-400 hover:bg-white/5 hover:text-gray-100'
-                }`}
-              >
-                <div className={`absolute left-0 top-1/2 -translate-y-1/2 h-4 w-1 rounded-r-full bg-green-400 transition-transform scale-y-0 group-hover:scale-y-50 ${isActive ? 'scale-y-100' : ''}`}></div>
-                <div className="relative mr-2">
-                  <img src={friend.avatarUrl} alt={friend.username} className="h-8 w-8 rounded-full" />
-                  <div className={`absolute -bottom-0.5 -right-0.5 p-0.5 rounded-full ${friend.status === UserStatus.OFFLINE ? '' : 'bg-[#24273a]'}`}>
-                      <div className={`h-2.5 w-2.5 rounded-full border-2 border-[#24273a] ${statusColors[friend.status]}`}></div>
-                  </div>
-                </div>
-                <span className="font-medium flex-1 truncate">{friend.username}</span>
-              </button>
-            )
-          })}
+            />
+          ))}
         </div>
       </div>
     </nav>
+    <UserPanel 
+        user={currentUser} 
+        onLogout={onLogout} 
+        isMuted={isMuted}
+        isDeafened={isDeafened}
+        onToggleMute={onToggleMute}
+        onToggleDeafen={onToggleDeafen}
+        onOpenSettings={onOpenSettings}
+        onViewProfile={onViewProfile}
+    />
+    </>
   );
 };
 

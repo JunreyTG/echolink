@@ -1,5 +1,9 @@
 {
   "name": "EchoLink UI Prototype",
   "description": "A high-fidelity UI prototype for EchoLink, a universal voice, video, and chat overlay for games. This prototype simulates the desktop companion app's interface.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "display-capture"
+  ]
 }
